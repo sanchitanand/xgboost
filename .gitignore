@@ -100,6 +100,7 @@ R-package/src/Makevars
 
 # Visual Studio
 .vs
+CMakeSettings.json
 
 # IntelliJ/CLion
 .idea
