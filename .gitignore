@@ -98,6 +98,9 @@ R-package/src/Makevars
 # Visual Studio Code
 /.vscode/
 
+# Visual Studio
+.vs
+
 # IntelliJ/CLion
 .idea
 *.iml
