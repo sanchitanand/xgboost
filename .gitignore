@@ -111,3 +111,6 @@ xgboost.pdb
 
 # GDB
 .gdb_history
+
+#Model directory
+model
