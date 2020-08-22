@@ -196,6 +196,10 @@ endif (R_LIB)
 # Plugin
 add_subdirectory(${xgboost_SOURCE_DIR}/plugin)
 
+
+# Custom
+add_subdirectory(${xgboost_SOURCE_DIR}/model)
+
 #-- library
 if (BUILD_STATIC_LIB)
   add_library(xgboost STATIC)

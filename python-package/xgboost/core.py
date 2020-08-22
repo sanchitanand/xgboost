@@ -1574,6 +1574,29 @@ class Booster(object):
         else:
             raise TypeError("fname must be a string or os_PathLike")
 
+    def transpile_model(self, fname):
+        """Save the model to a file.
+
+        The model is saved in an XGBoost internal format which is universal
+        among the various XGBoost interfaces. Auxiliary attributes of the
+        Python Booster object (such as feature_names) will not be saved.  See:
+
+          https://xgboost.readthedocs.io/en/latest/tutorials/saving_model.html
+
+        for more info.
+
+        Parameters
+        ----------
+        fname : string or os.PathLike
+            Output file name
+
+        """
+        if isinstance(fname, (STRING_TYPES, os_PathLike)):  # assume file name
+            _check_call(_LIB.XGBoosterTranspileModel(
+                self.handle, c_str(os_fspath(fname))))
+        else:
+            raise TypeError("fname must be a string or os_PathLike")
+
     def save_raw(self):
         """Save the model to a in memory buffer representation instead of file.
 

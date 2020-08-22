@@ -36,7 +36,7 @@ class PredictionContainer;
 /*!
  * \brief interface of gradient boosting model.
  */
-class GradientBooster : public Model, public Configurable {
+class GradientBooster : public Model, public Configurable, public Transpilable {
  protected:
   GenericParameter const* generic_param_;
 
@@ -120,6 +120,11 @@ class GradientBooster : public Model, public Configurable {
    * \param ntree_limit limit the number of trees used in prediction
    * \sa Predict
    */
+
+
+  virtual void Transpile(std::string* out) = 0;
+
+
   virtual void PredictInstance(const SparsePage::Inst& inst,
                                std::vector<bst_float>* out_preds,
                                unsigned ntree_limit = 0) = 0;
@@ -166,6 +171,11 @@ class GradientBooster : public Model, public Configurable {
   virtual std::vector<std::string> DumpModel(const FeatureMap& fmap,
                                              bool with_stats,
                                              std::string format) const = 0;
+
+
+ 
+
+
   /*!
    * \brief Whether the current booster uses GPU.
    */

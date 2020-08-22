@@ -856,5 +856,18 @@ XGB_DLL int XGBoosterGetAttrNames(BoosterHandle handle,
   API_END();
 }
 
+XGB_DLL int XGBoosterTranspileModel(BoosterHandle handle, const char* c_fname) {
+  API_BEGIN();
+  CHECK_HANDLE();
+  std::unique_ptr<dmlc::Stream> fo(dmlc::Stream::Create(c_fname, "w"));
+  auto* learner = static_cast<Learner*>(handle);
+  learner->Configure();
+  std::string os;
+  learner->Transpile(&os);
+  fo->Write(os.c_str(), os.size());
+  API_END();
+}
+
+
 // force link rabit
 static DMLC_ATTRIBUTE_UNUSED int XGBOOST_LINK_RABIT_C_API_ = RabitLinkTag();

@@ -41,6 +41,12 @@ struct Configurable {
    */
   virtual void SaveConfig(Json* out) const = 0;
 };
+
+struct Transpilable {
+  virtual ~Transpilable() = default;
+
+  virtual void Transpile(std::string* out) = 0;
+};
 }  // namespace xgboost
 
 #endif  // XGBOOST_MODEL_H_

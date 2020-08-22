@@ -30,7 +30,8 @@ namespace xgboost {
 enum CLITask {
   kTrain = 0,
   kDumpModel = 1,
-  kPredict = 2
+  kPredict = 2,
+  kTranspile = 3
 };
 
 struct CLIParam : public XGBoostParameter<CLIParam> {
@@ -68,6 +69,7 @@ struct CLIParam : public XGBoostParameter<CLIParam> {
   std::string name_fmap;
   /*! \brief name of dump file */
   std::string name_dump;
+  std::string name_source;
   /*! \brief the paths of validation data sets */
   std::vector<std::string> eval_data_paths;
   /*! \brief the names of the evaluation data used in output log */
@@ -84,6 +86,7 @@ struct CLIParam : public XGBoostParameter<CLIParam> {
         .add_enum("train", kTrain)
         .add_enum("dump", kDumpModel)
         .add_enum("pred", kPredict)
+        .add_enum("transpile", kTranspile)
         .describe("Task to be performed by the CLI program.");
     DMLC_DECLARE_FIELD(eval_train).set_default(false)
         .describe("Whether evaluate on training data during training.");
@@ -120,6 +123,8 @@ struct CLIParam : public XGBoostParameter<CLIParam> {
         .describe("Name of the feature map file.");
     DMLC_DECLARE_FIELD(name_dump).set_default("dump.txt")
         .describe("Name of the output dump text file.");
+    DMLC_DECLARE_FIELD(name_source).set_default("model.cc")
+        .describe("Path to the output source file.");
     // alias
     DMLC_DECLARE_ALIAS(train_path, data);
     DMLC_DECLARE_ALIAS(test_path, test:data);
@@ -320,6 +325,18 @@ class CLI {
     os.set_stream(nullptr);
   }
 
+  void CLITranspileModel() {
+    CHECK_NE(param_.name_source, CLIParam::kNull) << "Must specify file name for transpiling";
+    std::unique_ptr<dmlc::Stream> fs(dmlc::Stream::Create(param_.name_source.c_str(), "w"));
+    //load model
+    CHECK_NE(param_.model_in, CLIParam::kNull) << "Must specify model_in for dump";
+    this->ResetLearner({});
+    std::string os;
+    learner_->Transpile(&os);
+    fs->Write(os.c_str(), os.size());
+    LOG(INFO) << "Successfully wrote to " << param_.name_dump;
+  }
+
   void CLIPredict() {
     CHECK_NE(param_.test_path, CLIParam::kNull)
         << "Test dataset parameter test:data must be specified.";
@@ -499,6 +516,8 @@ class CLI {
       case kPredict:
         CLIPredict();
         break;
+      case kTranspile:
+        CLITranspileModel();
       }
     } catch (dmlc::Error const& e) {
       xgboost::CLIError(e);

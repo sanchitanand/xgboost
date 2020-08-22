@@ -193,6 +193,8 @@ class GBTree : public GradientBooster {
   void LoadConfig(Json const& in) override;
   void SaveConfig(Json* p_out) const override;
 
+  void Transpile(std::string* out);
+
   void SaveModel(Json* p_out) const override;
   void LoadModel(Json const& in) override;
 
@@ -260,6 +262,14 @@ class GBTree : public GradientBooster {
   }
 
  protected:
+   std::string get_transpiled_tree();
+
+   std::string get_predict_function(gbm::GBTreeModel const& model);
+
+   std::string get_tree_function(const std::unique_ptr<RegTree>& tree, int index);
+
+   std::string get_if_statement(const std::unique_ptr<RegTree>& tree, int node, int level);
+
   // initialize updater before using them
   void InitUpdater(Args const& cfg);
 

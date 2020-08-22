@@ -43,6 +43,7 @@
 #include "common/timer.h"
 #include "common/charconv.h"
 #include "common/version.h"
+#include "common/text_util.h"
 
 namespace {
 
@@ -1112,7 +1113,32 @@ class LearnerImpl : public LearnerIO {
     return cfg_;
   }
 
+  void Transpile(std::string* out) {
+    if (!learner_model_param_.num_output_group == 1) {
+      LOG(FATAL) << "Multiclass prediction is currently unsupported";
+    }
+
+    if (!(tparam_.objective == "binary:logistic")) {
+      LOG(FATAL) << "Unsupported objective function:" << tparam_.objective;
+    }
+    *out += std::string(TP_HEADERS);
+    *out += std::string(TP_DLL);
+    if ((tparam_.objective == "binary:logistic")) {
+      *out += std::string(TP_OBJ_FN);
+    }
+    else {
+      LOG(FATAL) << "Unsupported objective function:" << tparam_.objective;
+    }
+    *out += get_global_variables(learner_model_param_.num_feature, learner_model_param_.base_score);
+    gbm_->Transpile(out);
+    *out += std::string(CUST_PRED_FN);
+  }
+
  protected:
+   inline std::string get_global_variables(uint32_t num_feature, xgboost::bst_float base_score) {
+     return std::string("\nconstexpr int num_feature = " + std::to_string(num_feature) + ";\nconstexpr float base_score = " + std::to_string(base_score) + "F;\nconstexpr int kUnroll = 8;\n\n\n");
+   }
+
   /*!
    * \brief get un-transformed prediction
    * \param data training data matrix

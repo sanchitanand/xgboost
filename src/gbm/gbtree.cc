@@ -27,11 +27,80 @@
 #include "../common/common.h"
 #include "../common/random.h"
 #include "../common/timer.h"
+#include "../common/text_util.h"
 
 namespace xgboost {
 namespace gbm {
 
 DMLC_REGISTRY_FILE_TAG(gbtree);
+
+inline std::string tab_indent(int level) {
+  std::stringstream os;
+  for (int i = 0; i < level; i++) {
+    os << "\t";
+  }
+  return os.str();
+}
+
+inline std::string GBTree::get_transpiled_tree() {
+  std::string ret;
+  for (int i = 0; i < model_.trees.size(); i++) {
+    ret += GBTree::get_tree_function(model_.trees[i], i);
+  }
+  ret += GBTree::get_predict_function(model_);
+  return ret;
+}
+
+inline std::string GBTree::get_predict_function(gbm::GBTreeModel const& model) {
+  std::string ret = "inline void predict(float in[][num_feature],\n\tuint64_t n_rows,\n\tuint64_t n_cols,\n\tfloat* out_preds) { \
+    \n\tuint64_t rest = n_rows % kUnroll;\n\tfor (int64_t i = 0; i < n_rows - rest; i += kUnroll) { \
+    \n\t\tfor (int64_t k = 0; k < kUnroll; ++k) {\n";
+  for (int i = 0; i < model.trees.size(); i++) {
+    ret += "\t\t\tout_preds[i+k] += t" + std::to_string(i) + "(in[i+k]);\n";
+  }
+  ret += "\t\t\tout_preds[i+k] = obj_fn(out_preds[i+k]);\n\t\t}\n\t}\
+    \n\tfor (int64_t i = n_rows - rest; i < n_rows; ++i) {\n";
+  for (int i = 0; i < model.trees.size(); i++) {
+    ret += "\t\tout_preds[i] += t" + std::to_string(i) + "(in[i]);\n";
+  }
+  ret += "\t\tout_preds[i] = obj_fn(out_preds[i]);\n\t}\n}\n\n\n";
+  return ret;
+}
+
+
+inline std::string GBTree::get_tree_function(const std::unique_ptr<RegTree> &tree, int index) {
+  std::string ret = "inline float t" + std::to_string(index) + "(float row[num_feature]) {\n";
+  ret += GBTree::get_if_statement(tree, 0, 1);
+  ret += "}\n\n\n";
+  return ret;
+}
+
+
+inline std::string GBTree::get_if_statement(const std::unique_ptr<RegTree>& tree, int node, int level) {
+  std::string tabs = tab_indent(level);
+  std::string ret = tabs;
+  if ((*tree)[node].IsLeaf()) {
+    ret += "return " + std::to_string((*tree)[node].LeafValue()) + "F;\n";
+    return ret;
+  }
+  if ((*tree)[node].DefaultLeft()) {
+    ret += "if(row[" + std::to_string((*tree)[node].SplitIndex()) + "] >= " + std::to_string((*tree)[node].SplitCond()) + "){\n";
+    ret += GBTree::get_if_statement(tree, (*tree)[node].RightChild(), level + 1);
+    ret += tabs + "} else {\n";
+    ret += GBTree::get_if_statement(tree, (*tree)[node].LeftChild(), level + 1);
+    ret += tabs + "}\n";
+    return ret;
+  }
+  else {
+    ret += "if(row[" + std::to_string((*tree)[node].SplitIndex()) + "] < " + std::to_string((*tree)[node].SplitCond()) + "){\n";
+    ret += GBTree::get_if_statement(tree, (*tree)[node].LeftChild(), level + 1);
+    ret += tabs + "} else {\n";
+    ret += GBTree::get_if_statement(tree, (*tree)[node].RightChild(), level + 1);
+    ret += tabs + "}\n";
+    return ret;
+  }
+}
+
 
 void GBTree::Configure(const Args& cfg) {
   this->cfg_ = cfg;
@@ -384,6 +453,10 @@ void GBTree::SaveConfig(Json* p_out) const {
     up->SaveConfig(&j_up);
   }
   out["specified_updater"] = Boolean{specified_updater_};
+}
+
+void GBTree::Transpile(std::string* out) {
+  *out += get_transpiled_tree();
 }
 
 void GBTree::LoadModel(Json const& in) {

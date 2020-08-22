@@ -15,7 +15,6 @@
 #include <xgboost/generic_parameters.h>
 #include <xgboost/host_device_vector.h>
 #include <xgboost/model.h>
-
 #include <utility>
 #include <map>
 #include <memory>
@@ -62,7 +61,7 @@ struct XGBAPIThreadLocalEntry {
  *
  *  \endcode
  */
-class Learner : public Model, public Configurable, public dmlc::Serializable {
+class Learner : public Model, public Configurable, public dmlc::Serializable, public Transpilable{
  public:
   /*! \brief virtual destructor */
   ~Learner() override;

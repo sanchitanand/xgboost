@@ -73,6 +73,11 @@ class GBLinear : public GradientBooster {
     }
   }
 
+  void Transpile(std::string* out) override {
+    LOG(FATAL) << "Transpile is not supported by current booster.";
+  }
+
+
   void Load(dmlc::Stream* fi) override {
     model_.Load(fi);
   }
