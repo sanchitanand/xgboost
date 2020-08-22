@@ -53,13 +53,7 @@ inline std::string GBTree::get_transpiled_tree() {
 
 inline std::string GBTree::get_predict_function(gbm::GBTreeModel const& model) {
   std::string ret = "inline void predict(float in[][num_feature],\n\tuint64_t n_rows,\n\tuint64_t n_cols,\n\tfloat* out_preds) { \
-    \n\tuint64_t rest = n_rows % kUnroll;\n\tfor (int64_t i = 0; i < n_rows - rest; i += kUnroll) { \
-    \n\t\tfor (int64_t k = 0; k < kUnroll; ++k) {\n";
-  for (int i = 0; i < model.trees.size(); i++) {
-    ret += "\t\t\tout_preds[i+k] += t" + std::to_string(i) + "(in[i+k]);\n";
-  }
-  ret += "\t\t\tout_preds[i+k] = obj_fn(out_preds[i+k]);\n\t\t}\n\t}\
-    \n\tfor (int64_t i = n_rows - rest; i < n_rows; ++i) {\n";
+    \n\tfor (int64_t i = 0; i < n_rows; ++i) {\n";
   for (int i = 0; i < model.trees.size(); i++) {
     ret += "\t\tout_preds[i] += t" + std::to_string(i) + "(in[i]);\n";
   }
