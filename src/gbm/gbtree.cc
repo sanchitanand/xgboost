@@ -53,6 +53,7 @@ inline std::string GBTree::get_transpiled_tree() {
 
 inline std::string GBTree::get_predict_function(gbm::GBTreeModel const& model) {
   std::string ret = "inline void predict(float in[][num_feature],\n\tuint64_t n_rows,\n\tuint64_t n_cols,\n\tfloat* out_preds) { \
+    \n\t#pragma omp parallel for schedule(static) \
     \n\tfor (int64_t i = 0; i < n_rows; ++i) {\n";
   for (int i = 0; i < model.trees.size(); i++) {
     ret += "\t\tout_preds[i] += t" + std::to_string(i) + "(in[i]);\n";
