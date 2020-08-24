@@ -78,8 +78,10 @@ inline std::string GBTree::get_if_statement(const std::unique_ptr<RegTree>& tree
     ret += "return " + std::to_string((*tree)[node].LeafValue()) + "F;\n";
     return ret;
   }
+  auto split_ind = std::to_string((*tree)[node].SplitIndex());
+  auto split_cond = std::to_string((*tree)[node].SplitCond());
   if ((*tree)[node].DefaultLeft()) {
-    ret += "if(row[" + std::to_string((*tree)[node].SplitIndex()) + "] >= " + std::to_string((*tree)[node].SplitCond()) + "){\n";
+    ret += "if(row[" + split_ind + "] >= " + split_cond + "F){\n";
     ret += GBTree::get_if_statement(tree, (*tree)[node].RightChild(), level + 1);
     ret += tabs + "} else {\n";
     ret += GBTree::get_if_statement(tree, (*tree)[node].LeftChild(), level + 1);
@@ -87,7 +89,7 @@ inline std::string GBTree::get_if_statement(const std::unique_ptr<RegTree>& tree
     return ret;
   }
   else {
-    ret += "if(row[" + std::to_string((*tree)[node].SplitIndex()) + "] < " + std::to_string((*tree)[node].SplitCond()) + "){\n";
+    ret += "if(row[" + split_ind + "] < " + split_cond + "F){\n";
     ret += GBTree::get_if_statement(tree, (*tree)[node].LeftChild(), level + 1);
     ret += tabs + "} else {\n";
     ret += GBTree::get_if_statement(tree, (*tree)[node].RightChild(), level + 1);

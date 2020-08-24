@@ -1117,10 +1117,6 @@ class LearnerImpl : public LearnerIO {
     if (!learner_model_param_.num_output_group == 1) {
       LOG(FATAL) << "Multiclass prediction is currently unsupported";
     }
-
-    if (!(tparam_.objective == "binary:logistic")) {
-      LOG(FATAL) << "Unsupported objective function:" << tparam_.objective;
-    }
     *out += std::string(TP_HEADERS);
     *out += std::string(TP_DLL);
     if ((tparam_.objective == "binary:logistic")) {
@@ -1136,7 +1132,7 @@ class LearnerImpl : public LearnerIO {
 
  protected:
    inline std::string get_global_variables(uint32_t num_feature, xgboost::bst_float base_score) {
-     return std::string("\nconstexpr int num_feature = " + std::to_string(num_feature) + ";\nconstexpr float base_score = " + std::to_string(base_score) + "F;\nconstexpr int kUnroll = 8;\n\n\n");
+     return std::string("\nconstexpr int num_feature = " + std::to_string(num_feature) + ";\nconstexpr float base_score = " + std::to_string(base_score) + "F;\n\n\n");
    }
 
   /*!
